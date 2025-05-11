@@ -1,4 +1,4 @@
-﻿namespace APBD_Lab09.Models;
+﻿namespace APBD_Lab09.Models.DTOs;
 
 public class ProductWarehouseResponse
 {
