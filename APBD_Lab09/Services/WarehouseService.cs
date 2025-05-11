@@ -23,16 +23,38 @@ public class WarehouseService : IWarehouseService
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
+                await connection.OpenAsync();
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Sprawdzamy, czy produkt o podanym identyfikatorze istnieje.
+                        using (SqlCommand command = new SqlCommand("SELECT 1 FROM Product WHERE IdProduct = @IdProduct",
+                                   connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@IdProduct", request.IdProduct);
+                            var productExists = await command.ExecuteScalarAsync();
+                            if (productExists != null)
+                            {
+                                throw new KeyNotFoundException(
+                                    $"Produkt o podanym ID ({request.IdProduct}) nie istnieje.");
+                            }
+                        }
+                        // Następnie sprawdzamy, czy magazyn o podanym identyfikatorze istnieje. 
+                        // Dlatego sprawdzamy, czy w tabeli Order istnieje rekord z IdProduktu i Ilością (Amount), które odpowiadają naszemu żądaniu. 
+                        // Data utworzenia zamówienia powinna być wcześniejsza niż data utworzenia w żądaniu
+                        // Sprawdzamy, czy to zamówienie zostało przypadkiem zrealizowane.
+                        // Aktualizujemy kolumnę FullfilledAt
+                        // Wstawiamy rekord do tabeli Product_Warehouse. 
+                        // zwracamy wartość klucza głównego wygenerowanego
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
-            // Sprawdzamy, czy produkt o podanym identyfikatorze istnieje.
-            // Następnie sprawdzamy, czy magazyn o podanym identyfikatorze istnieje. 
-            // Dlatego sprawdzamy, czy w tabeli Order istnieje rekord z IdProduktu i Ilością (Amount), które odpowiadają naszemu żądaniu. 
-            // Data utworzenia zamówienia powinna być wcześniejsza niż data utworzenia w żądaniu
-            // Sprawdzamy, czy to zamówienie zostało przypadkiem zrealizowane.
-            // Aktualizujemy kolumnę FullfilledAt
-            // Wstawiamy rekord do tabeli Product_Warehouse. 
-            // zwracamy wartość klucza głównego wygenerowanego
-
         }
         catch (Exception ex)
         {
