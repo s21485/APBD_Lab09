@@ -41,6 +41,13 @@ public class WarehouseService : IWarehouseService
                             }
                         }
                         // Następnie sprawdzamy, czy magazyn o podanym identyfikatorze istnieje. 
+                        using (SqlCommand command = new SqlCommand("SELECT 1 FROM Warehouse WHERE IdWarehouse = @IdWarehouse", connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@IdWarehouse", request.IdWarehouse);
+                            var warehouseExists = await command.ExecuteScalarAsync();
+                            if (warehouseExists != null)
+                                throw new KeyNotFoundException($"Magazyn {request.IdWarehouse} nie istnieje.");
+                        }
                         // Dlatego sprawdzamy, czy w tabeli Order istnieje rekord z IdProduktu i Ilością (Amount), które odpowiadają naszemu żądaniu. 
                         // Data utworzenia zamówienia powinna być wcześniejsza niż data utworzenia w żądaniu
                         // Sprawdzamy, czy to zamówienie zostało przypadkiem zrealizowane.
